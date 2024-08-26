@@ -25,7 +25,7 @@ It was decided to test on a new set of data as the detection methods that were b
 
 Creates a time series of LISA data containing sine-gaussian glitches. Two main parts to the program: make_glitch, creates a .h5 glitch file based off user entered parameters along with a .txt file showing all the glitches in the data and inject_glitch, which takes the output glitch files from make_glitch and simulates the LISA spacecraft then calculates the TDI channels. 
 
-####Files in detail (the important ones)
+#### Files in detail (the important ones)
 
 <ins>make_glitch:</ins> 
 Can be run alone directly from the command line (make sure to be in the /simulate_glitches/ directory)
@@ -48,9 +48,9 @@ Methods:
 
 Notes: to run just this file from the command line, uncomment the __name__ == "__main__": section at the end of the file
 
-#### Q-transform
+### Q-transform
 
-Files
+<ins>Files:</ins>
 
 The only file of interest is search.py, this file completes the whole q-transform search on TDI data, including clustering. I modified the code such that we were able to use it for glitch detection. The largest change would be that the TDI data is segmented into 24hr segments. Beforehand, when using the full TDI data lower amplitude glitches were missed as the q-transform was ‘focusing’ on the louder ones. By segmenting the data this issue is less present as each section won’t have such a large concentration of loud glitches. There were no other massive changes apart from not using refine_mismatch as it’s not needed for glitches. 
 Note: When it saves it doesn’t save in the segmented version, the segments overlap by 12hr and the overlap is averaged to get the scan covering the whole TDI channel.
