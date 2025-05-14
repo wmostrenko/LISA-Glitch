@@ -7,7 +7,7 @@ beta_type: 'Exponential'
 glitch_rate: 4
 glitch_spacing: 20000
 avg_amp: 1e-10
-amp_std: 1e-11
+std_amp: 1e-11
 avg_set_min: 1e-9
 avg_set_max: 1e-10
 beta_scale: 50

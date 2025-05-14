@@ -71,11 +71,12 @@ kiwisolver==1.4.5
 lalsuite==7.22
 ligo-segments==1.4.0
 ligotimegps==2.0.1
-lisa-data-challenge==1.2.2
+#lisa-data-challenge==1.2.2
+/Users/william/Documents/LDC
 lisaconstants==1.3.4
 lisaglitch==1.3
 lisagwresponse==2.3
--e git+https://gitlab.com/ubc-gws/lisa-hierarchical-triples.git@22c727e2ed1cee163e7254f5fbd1c20a05642fb4#egg=lisaHTI
+-e git+ssh://gitlab.com/ubc-gws/lisa-hierarchical-triples.git@22c727e2ed1cee163e7254f5fbd1c20a05642fb4#egg=lisaHTI
 lisainstrument==1.6
 lisaorbits==2.3
 lscsoft-glue==4.0.0

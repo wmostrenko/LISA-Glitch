@@ -20,7 +20,8 @@ PATH_qfiles = os.path.join(PATH_cd, 'q_transform/q_files/')
 
 
 def read_tdi(file, tdi):
-    """Read TDI time series data.
+    """
+    Read TDI time series data.
     """
     data_dict = TimeSeriesDict.read(file)
 
