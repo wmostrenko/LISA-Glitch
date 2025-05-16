@@ -2,7 +2,6 @@ import os
 import numpy as np
 from scipy.signal.windows import tukey
 from pytdi.michelson import X2, Y2, Z2
-# from ldc.utils.logging import init_logger, close_logger
 from gwpy.timeseries import TimeSeries, TimeSeriesDict
 from lisainstrument.containers import ForEachMOSA
 from lisainstrument import Instrument
@@ -20,7 +19,8 @@ PATH_tdi_data = os.path.join(PATH_bethLISA, "dist/tdi_data/")
 
 def init_cl():
     """Initialize commandline arguments and return Namespace object with all
-    given commandline arguments."""
+    given commandline arguments.
+    """
 
     parser = argparse.ArgumentParser()
 
@@ -28,25 +28,21 @@ def init_cl():
     parser.add_argument(
         "--glitch_input_h5",
         type=str,
-        default=None,  # check if default is auto None, if so remove
         help="Glitch input h5 file path",
     )
     parser.add_argument(
         "--glitch_input_txt",
         type=str,
-        default=None,
         help="Glitch input txt file path"
     )
     parser.add_argument(
         "--simulation_output_h5",
         type=str,
-        default=None,
         help="Pre-TDI LISA simulation output h5 file path",
     )
     parser.add_argument(
         "--tdi_output_h5",
         type=str,
-        default=None,
         help="TDI channels output h5 file path",
     )
 
@@ -58,10 +54,7 @@ def init_cl():
         help="Simulate LISA instruments without noise?",
     )
 
-    args = parser.parse_args()
-    # logger = init_logger(args.log, name='lisaglitch.glitch')
-
-    return args
+    return parser.parse_args()
 
 
 def init_glitch_inputs(glitch_input_txt_path):
@@ -155,11 +148,8 @@ def compute_and_save_tdi_channels(
     tdi_dict.write(tdi_output_h5_path, overwrite=True)
 
 
-def main(
-    glitch_input_h5,
-    glitch_input_txt,
-    simulation_output_h5,
-    tdi_output_h5,
+def inject_glitch(
+    glitch_input_h5, glitch_input_txt, simulation_output_h5, tdi_output_h5,
     disable_noise,
 ):
     cl_args = init_cl()
@@ -190,5 +180,4 @@ def main(
 
 """Uncomment to run inject_glitch alone"""
 # if __name__ == "__main__":
-
-#     main(tdi_output_h5=None)
+#     inject_glitch(tdi_output_h5=None)

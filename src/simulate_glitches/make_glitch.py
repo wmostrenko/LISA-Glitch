@@ -4,7 +4,6 @@ import lisaglitch
 import numpy as np
 import ldc.io.yml as ymlio
 import argparse
-# from ldc.utils.logging import init_logger, close_logger
 import distributions
 
 
@@ -29,25 +28,23 @@ def init_cl():
         "--glitch_h5_output",
         type=str,
         default="glitch",
-        help="Glitch output h5 file",
+        help="Glitch output h5 file name",
     )
     parser.add_argument(
         "--glitch_h5_output",
         type=str,
         default="glitch",
-        help="Glitch output txt file",
+        help="Glitch output txt file name",
     )
     parser.add_argument(
         "--glitch_cfg_input",
         type=str,
-        default=None,
-        help="Glitch config file",
+        help="Glitch config file name",
     )
     parser.add_argument(
         "--pipe_cfg_input",
         type=str,
-        default=None,
-        help="Pipeline config file",
+        help="Pipeline config file name",
     )
 
     # GLITCH ARGUMENTS
@@ -69,8 +66,6 @@ def init_cl():
         default="Exponential",
         help=""
     )
-
-    # GLITCH PARAMETERS
     parser.add_argument(
         "--t_min",
         type=float,
@@ -150,10 +145,7 @@ def init_cl():
         help=""
     )
 
-    args = parser.parse_args()
-    # init_logger(args.log, name="lisaglitch.glitch")
-
-    return args
+    return parser.parse_args()
 
 
 def cl_args_to_params(cl_args):
@@ -347,13 +339,13 @@ def simulate_glitches(params):
             )
 
 
-def main(inj_args, testing):
-    if inj_args is not None:
+def make_glitch(args):
+    if args is not None:
         params = file_paths_to_params(
-            PATH_glitch_config + inj_args.glitch_cfg_input,
-            PATH_glitch_config + inj_args.pipe_cfg_input,
-            inj_args.glitch_h5_output,
-            inj_args.glitch_txt_output,
+            PATH_glitch_config + args.glitch_cfg_input,
+            PATH_glitch_config + args.pipe_cfg_input,
+            args.glitch_h5_output,
+            args.glitch_txt_output,
         )
     else:
         cl_args = init_cl()
@@ -375,6 +367,5 @@ def main(inj_args, testing):
 
 
 """Uncomment to run make_glitch alone"""
-if __name__ == "__main__":
-
-    main(inj_args=None, testing=False)
+# if __name__ == "__main__":
+#     make_glitch(args=None)
