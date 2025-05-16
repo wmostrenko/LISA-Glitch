@@ -4,7 +4,6 @@ import lisaglitch
 import numpy as np
 import ldc.io.yml as ymlio
 import argparse
-
 # from ldc.utils.logging import init_logger, close_logger
 import distributions
 
@@ -27,22 +26,16 @@ def init_cl():
 
     # FILE MANAGEMENT
     parser.add_argument(
-        "--glitch_h5_mg_output",
+        "--glitch_h5_output",
         type=str,
         default="glitch",
         help="Glitch output h5 file",
     )
     parser.add_argument(
-        "--glitch_txt_mg_output",
+        "--glitch_h5_output",
         type=str,
         default="glitch",
         help="Glitch output txt file",
-    )
-    parser.add_argument(
-        "--tdi_output_file",
-        type=str,
-        default="final_tdi",
-        help="Glitch output h5 file for inject_glitch",
     )
     parser.add_argument(
         "--glitch_cfg_input",
@@ -63,7 +56,7 @@ def init_cl():
         help="Log file"
     )
 
-    # GLITCH CHARACTERISTICS
+    # GLITCH ARGUMENTS
     parser.add_argument(
         "--glitch_type",
         type=str,
@@ -196,22 +189,22 @@ def cl_args_to_params(cl_args):
         "beta_type": cl_args.beta_type,
         "beta_set": [cl_args.beta_set_min, cl_args.beta_set_max],
         "beta_scale": cl_args.beta_scale,
-        "glitch_h5_mg_output": PATH_io + cl_args.glitch_h5_mg_output,
-        "glitch_txt_mg_output": PATH_io + cl_args.glitch_txt_mg_output,
+        "glitch_h5_output": PATH_io + cl_args.glitch_h5_output,
+        "glitch_h5_output": PATH_io + cl_args.glitch_h5_output,
     }
 
     return params
 
 
 def file_paths_to_params(
-    glitch_cfg_path, pipe_cfg_path, glitch_h5_mg_output, glitch_txt_mg_output
+    glitch_cfg_path, pipe_cfg_path, glitch_h5_output, glitch_h5_output
 ):
     # """
     # Parameters:
     #   glitch_cfg_path: path to glitch_cfg file
     #   pipe_cfg_path: path to pipe_cfg file
-    #   glitch_h5_mg_output: path to final glitch file in as .h5
-    #   glitch_txt_mg_output: path to final glitch file in as .txt
+    #   glitch_h5_output: path to final glitch file in as .h5
+    #   glitch_h5_output: path to final glitch file in as .txt
     # Returns:
     #   A dictionary of all the needed parameters (and combinations of
     #   parameters)
@@ -239,8 +232,8 @@ def file_paths_to_params(
         "beta_type": glitch_cfg["beta_type"],
         "beta_set": [glitch_cfg["beta_set_min"], glitch_cfg["beta_set_max"]],
         "beta_scale": glitch_cfg["beta_scale"],
-        "glitch_h5_mg_output": PATH_io + glitch_h5_mg_output,
-        "glitch_txt_mg_output": PATH_io + glitch_txt_mg_output,
+        "glitch_h5_output": PATH_io + glitch_h5_output,
+        "glitch_h5_output": PATH_io + glitch_h5_output,
     }
 
     return params
@@ -320,7 +313,7 @@ def simulate_glitches(params):
             level=amp[i],
         )
         glitch_list.append(g)
-        g.write(path=params["glitch_h5_mg_output"])
+        g.write(path=params["glitch_h5_output"])
         print("-- Done Glitch --", i + 1, "of ", n_glitches)
 
     # FORMAT/MAKE GLITCH FILE
@@ -337,7 +330,7 @@ def simulate_glitches(params):
         + "level  "
     )
 
-    output_txt = params["glitch_txt_mg_output"]
+    output_txt = params["glitch_h5_output"]
 
     if os.path.exists(output_txt):
         os.remove(output_txt)
@@ -368,8 +361,8 @@ def main(inj_args, testing):
         params = file_paths_to_params(
             PATH_test + inj_args.glitch_cfg_input,
             PATH_test + inj_args.pipe_cfg_input,
-            inj_args.glitch_h5_mg_output,
-            inj_args.glitch_txt_mg_output,
+            inj_args.glitch_h5_output,
+            inj_args.glitch_h5_output,
         )  # TODO: Update these paths
     else:
         cl_args = init_cl()
@@ -379,16 +372,16 @@ def main(inj_args, testing):
             params = file_paths_to_params(
                 PATH_test + cl_args.glitch_cfg_input,
                 PATH_test + cl_args.pipe_cfg_input,
-                cl_args.glitch_h5_mg_output,
-                cl_args.glitch_txt_mg_output,
+                cl_args.glitch_h5_output,
+                cl_args.glitch_h5_output,
             )  # TODO: Update these paths
         else:
             params = cl_args_to_params(cl_args)
 
     simulate_glitches(params)
 
-    return params["glitch_h5_mg_output"],
-    params["glitch_txt_mg_output"]
+    return params["glitch_h5_output"],
+    params["glitch_h5_output"]
 
 
 """Uncomment to run make_glitch alone"""

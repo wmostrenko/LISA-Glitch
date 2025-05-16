@@ -8,21 +8,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal.windows import tukey
 from pytdi.michelson import X2, Y2, Z2
-from ldc.utils.logging import init_logger, close_logger
+# from ldc.utils.logging import init_logger, close_logger
 from gwpy.timeseries import TimeSeries, TimeSeriesDict
 from lisainstrument.containers import ForEachMOSA
 from lisainstrument import Instrument
-from pytdi import Data
+from pytdi from Data import from_instrument
+import argparse
 
 start_time = time.time()  # timing stuff
 
 PATH_cd = os.getcwd()
 PATH_lgs = os.path.abspath(os.path.join(PATH_cd, os.pardir))  # PATH to lisa_glitch_simulation directory
-PATH_io = os.path.join(os.path.abspath(os.path.join(PATH_cd, os.pardir)), 'input_output')
+PATH_io = os.path.join(os.path.abspath(os.path.join(PATH_cd, os.pardir)), 'input_output') # Maybe + "/"
 PATH_tdi_out = os.path.join(PATH_lgs, 'final_tdi_outputs')
-
-TDI_VAR = [X2, Y2, Z2]
-TDI_NAMES = ['X', 'Y', 'Z']
 
 
 def init_cl():
@@ -30,56 +28,68 @@ def init_cl():
     initialize the command line arguments
     """
 
-    import argparse
     parser = argparse.ArgumentParser()
-    # Main arguments
-    parser.add_argument('--path-input', type=str, default=PATH_io, help="Path to input glitch files")
-    parser.add_argument('--path-output', type=str, default=PATH_cd, help="Path to save output tdi files")
-    parser.add_argument('--glitch-h5-mg-output', type=str, default="", help="Glitch output h5 file")
-    parser.add_argument('--glitch-txt-mg-output', type=str, default="", help="Glitch output txt file")
-    parser.add_argument('--tdi-output-file', type=str, default="", help="Glitch output h5 file")
-    parser.add_argument('--no-glitches', type=bool, default=False, help="Want Glitches?")
-    parser.add_argument('--noise', type=bool, default=True, help="Want noise?")
-    parser.add_argument('-l', '--log', default="", help="Log file")
+
+    # FILE MANAGEMENT
+    parser.add_argument(
+        '--glitch_input_h5',
+        type=str,
+        default=None, #check if default is auto None, if so remove
+        help="Glitch input h5 file path"
+    )
+    parser.add_argument(
+        '--glitch_input_txt',
+        type=str,
+        default=None,
+        help="Glitch input txt file path"
+    )
+    parser.add_argument(
+        '--simulation_output_h5',
+        type=str,
+        default=None,
+        help="Pre-TDI LISA simulation output h5 file path"
+    )
+    parser.add_argument(
+        '--tdi_output_h5',
+        type=str,
+        default=None,
+        help="TDI channels output h5 file path"
+    )
+
+    # LISA INSTRUMENT ARGUMENTS
+    parser.add_argument(
+        '--disable_noise',
+        type=bool,
+        default=False,
+        help="Simulate LISA instruments without noise?"
+    )
+
     args = parser.parse_args()
-    logger = init_logger(args.log, name='lisaglitch.glitch')
+    # logger = init_logger(args.log, name='lisaglitch.glitch')
 
     return args
 
 
-def init_inputs(glitch_info, old_file=False):
+def init_glitch_inputs(glitch_input_txt):
     """
     initialize the input variables
     """
 
-    if not old_file:
-        g_info = np.genfromtxt(PATH_io + '/' + glitch_info)
-        n_samples = g_info[1:, 1][0]
-        g_dt = g_info[1:, 2][0]
-        g_t0 = g_info[1:, 4][0]
-        g_physics_upsampling = g_info[1:, 3][0]
-        dt_physic = g_dt / g_physics_upsampling
-    else:
-        g_info = np.genfromtxt(PATH_io + '/' + glitch_info)
-        n_samples = g_info[1:, 1][0]
-        g_dt = g_info[1:, 2][0]
-        g_t0 = g_info[1:, 3][0]
-        g_physics_upsampling = 1.0
-        dt_physic = g_dt / g_physics_upsampling
+    glitch_inputs = np.genfromtxt(PATH_io + '/' + glitch_input_txt)
 
-    central_freq = 2.816E14
-    aafilter = None
+    glitch_inputs_dict = {
+        'n_samples': glitch_input[1:, 1][0],
+        'dt': glitch_input[1:, 2][0],
+        't0': glitch_input[1:, 3][0],
+        'physics_upsampling': 1.0,
+        'dt_physic': glitch_input[1:, 2][0] / 1.0,
+        'aafilter': None,
+    }
 
-    d = {"backlinknoise": 3e-12, "accnoise": 2.4e-15, "readoutnoise": 6.35e-12}
-
-    g_inputs = {'n_samples': n_samples, 'dt': g_dt, 't0': g_t0, 'physics_upsampling': g_physics_upsampling,
-                'dt_physic': dt_physic, 'central_freq': central_freq, 'aafilter': aafilter,
-                'noise_dict': d}
-
-    return g_inputs
+    return glitch_inputs_dict
 
 
-def simulate_lisa(glitch_file, glitch_inputs, noise=True, clean=False):
+def simulate_lisa(glitch_file_h5_path, simulation_output_h5_path, glitch_inputs, disable_noise):
     """simulate the lisa instrument with the glitch file to be injected
 
     Args:
@@ -91,50 +101,23 @@ def simulate_lisa(glitch_file, glitch_inputs, noise=True, clean=False):
     lisainstrument simulation object
     """
 
-    # Inject Glitches
-    if clean:
-        print('here')
-        i = Instrument(physics_upsampling=glitch_inputs['physics_upsampling'], aafilter=glitch_inputs['aafilter'],
-                       size=glitch_inputs['n_samples'], dt=glitch_inputs['dt'],
-                       central_freq=glitch_inputs['central_freq'],
-                       backlink_asds=glitch_inputs['noise_dict']["backlinknoise"],
-                       testmass_asds=glitch_inputs['noise_dict']["accnoise"])
-        if noise:
-            i.oms_isc_carrier_asds = ForEachMOSA(glitch_inputs['noise_dict']["readoutnoise"])
+    lisa_instrument = Instrument(
+        size=glitch_inputs['n_samples'],
+        dt=glitch_inputs['dt'],
+        physics_upsampling=glitch_inputs['physics_upsampling'],
+        aafilter=glitch_inputs['aafilter']
+    )
 
-            i.laser_asds = ForEachMOSA(0)  # Remove laser noise because doesn't work with PyTDI
+    lisa_instrument.laser_asds = ForEachMOSA(0)  # Remove laser noise because doesn't work with PyTDI # investigate this
+    # i.oms_isc_carrier_asds = ForEachMOSA(glitch_inputs['noise_dict']["readoutnoise"])
 
-            i.disable_clock_noises()
-            i.modulation_asds = ForEachMOSA(0)
-            i.disable_ranging_noises()
-            i.disable_dopplers()
-        else:
-            i.disable_all_noises()
+    if disable_nosie:
+        lisa_instrument.disable_all_noises()
 
-        i.simulate()  # Run simulator
-
-        return i
-
-    else:
-        i = Instrument(physics_upsampling=glitch_inputs['physics_upsampling'], aafilter=glitch_inputs['aafilter'],
-                       size=glitch_inputs['n_samples'], dt=glitch_inputs['dt'],
-                       central_freq=glitch_inputs['central_freq'],
-                       backlink_asds=glitch_inputs['noise_dict']["backlinknoise"],
-                       testmass_asds=glitch_inputs['noise_dict']["accnoise"], glitches=glitch_file)
-
-        if noise:
-            i.oms_isc_carrier_asds = ForEachMOSA(glitch_inputs['noise_dict']["readoutnoise"])
-
-            i.laser_asds = ForEachMOSA(0)  # Remove laser noise because doesn't work with PyTDI
-        else:
-            i.disable_all_noises()
-
-        i.simulate()  # Run simulator
-
-        return i
+    lisa_instrument.write(simulation_output_h5_path)
 
 
-def tdi_channels(i, channels, inputs, tdi_names):
+def compute_tdi_channels(tdi_output_h5_path, t0, dt):
     """create the TDI channels X, Y, Z using PyTDI
 
     Args
@@ -147,22 +130,23 @@ def tdi_channels(i, channels, inputs, tdi_names):
     dict of all constructed TDI channels
     """
 
-    tdis = TimeSeriesDict()
-    for j in range(len(channels)):
-        ch = channels[j]
+    channels = [X2, Y2, Z2]
+    tdi_names = ['X', 'Y', 'Z']
+    tdi_dict = TimeSeriesDict()
 
-        data = Data.from_instrument(i)
+    for i in range(len(channels)):
+        channel = channels[i]
+        
+        data = from_instrument(tdi_output_h5_path)
         data.delay_derivative = None
 
-        built = ch.build(delays=data.delays, fs=data.fs)
+        tdi_calculator = channel.build(data.args)
+        tdi_data = tdi_calculator(data.measurements)
 
-        tdi_data = built(data.measurements)/inputs['central_freq']
+        window = tukey(tdi_data.size, alpha=0.001)
+        tdi_dict[tdi_names[i]] = TimeSeries(tdi_data*window, t0=t0, dt=dt)
 
-        # Window out the tdi channels - tukey window
-        win = tukey(tdi_data.size, alpha=0.001)
-        tdis[tdi_names[j]] = TimeSeries(tdi_data*win, t0=inputs['t0'], dt=inputs['dt'])
-
-    return tdis
+    tdi_dict.write(tdi_output_h5_path, overwrite=True)
 
 
 def plot_tdi(tdi, tdi_name, xlims=None, ylims=None):
@@ -184,34 +168,47 @@ def save_tdi(tdi, output_fname, output_path):
 
     tdi.write(f'{output_path}/{output_fname}', overwrite=True)
 
+# remove defaults here and instaed set them in the run inject_glitch alone part
+# also i don't like having these function names be "main" would rather have them as file names, but perhaps check official style guide regarding that first
+def main(glitch_input_h5, glitch_input_txt, simulation_output_h5, tdi_output_h5, disable_noise):
+    # instead of having clean, just specifty an empty glitch file
+    # should be able to specify in main whether or not we want noise (or in command line)
+    # two ways to run: from calling main or from direct command line
+    # tdi_start_t = time.time()
 
-def main(glitch_file_h5=None, glitch_file_txt=None, glitch_file_op=None, clean=False):
+    # if command line, then set parameter variables to 
+    cl_args = init_cl()
 
-    tdi_start_t = time.time()
+    if cl_args.tdi_output_h5 is not None:
+        glitch_input_h5 = cl_args.glitch_input_h5
+        glitch_input_txt = cl_args.glitch_input_txt
+        simulation_output_h5 = cl_args.simulation_output_h5
+        tdi_output_h5 = cl_args.tdi_output_h5
+        disable_noise = cl_args.disable_noise
 
-    if clean:
-        fname_in_h5 = glitch_file_h5
-        fname_in_txt = glitch_file_txt
-        fname_out = glitch_file_op
-        noise = True
+    # if clean:
+    #     fname_in_h5 = glitch_file_h5
+    #     fname_in_txt = glitch_file_txt
+    #     fname_out = glitch_file_op
+    #     noise = True
 
-    else:
-        fname_in_h5 = glitch_file_h5
-        fname_in_txt = glitch_file_txt
-        fname_out = glitch_file_op
-        noise = True
+    # else:
+    #     fname_in_h5 = glitch_file_h5
+    #     fname_in_txt = glitch_file_txt
+    #     fname_out = glitch_file_op
+    #     noise = True
 
-    inputs = init_inputs(fname_in_txt, old_file=True)
+    glitch_inputs = init_glitch_inputs(glitch_input_txt)
 
-    sim = simulate_lisa(PATH_io + '/' + fname_in_h5, inputs, noise=noise, clean=clean)
+    simulate_lisa(PATH_io + '/' + glitch_file_h5, SOMEPATH + simulation_output_h5, glitch_inputs, disable_noise)
 
-    tdi_dict = tdi_channels(sim, TDI_VAR, inputs, TDI_NAMES)
+    compute_tdi_channels(SOMEPATH + tdi_output_h5, glitch_inputs["dt"], glitch_inputs["t0"])
 
-    save_tdi(tdi_dict, fname_out, PATH_tdi_out)
+    # save_tdi(tdi_dict, fname_out, PATH_tdi_out)
 
-    tdi_end_t = time.time()
-    print("TDI Time: ")
-    print("--- %s seconds ---" % (tdi_end_t - tdi_start_t))
+    # tdi_end_t = time.time()
+    # print("TDI Time: ")
+    # print("--- %s seconds ---" % (tdi_end_t - tdi_start_t))
 
 
 """Uncomment to run inject_glitch alone"""

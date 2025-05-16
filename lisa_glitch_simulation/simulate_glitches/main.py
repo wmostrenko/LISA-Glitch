@@ -30,13 +30,13 @@ def init_cl():
         type=str,
         default=PATH_io,
         help="Path to input glitch files"
-    )
+    ) # never used
     parser.add_argument(
         "--path-output",
         type=str,
         default=PATH_tdi_out,
         help="Path to save output tdi files",
-    )
+    ) # never used
     parser.add_argument(
         "--glitch-h5-mg-output",
         type=str,
@@ -62,31 +62,31 @@ def init_cl():
         type=str,
         default="pipeline_cfg",
         help="Pipeline config file"
-    )
+    ) # never used
     parser.add_argument(
         "--glitch-config-input",
         type=str,
         default="glitch_cfg",
         help="Glitch config file",
-    )
+    ) # never used
     parser.add_argument(
         "--testing",
         type=bool,
         default=False,
         help="Testing"
-    )
+    ) # should remove
     parser.add_argument(
         "--clean",
         type=bool,
         default=False,
         help="Clean data set"
-    )
+    ) # should remove, can just use empty glitch input file instead
     parser.add_argument(
         "-l",
         "--log",
         default="",
         help="Log file"
-    )
+    ) # should look into logging usage
 
     args = parser.parse_args()
     # logger = init_logger(args.log, name="lisaglitch.glitch")
@@ -104,7 +104,8 @@ def prep_config(glitch_config, segments):
     else:
         segments += 1
 
-
+# should add overall ability to seed stuff
+# also maybe make main its own function and call it here instead...just more elegant and uniform
 if __name__ == "__main__":
 
     main_args = init_cl()
