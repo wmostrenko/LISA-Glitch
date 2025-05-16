@@ -7,20 +7,20 @@ import argparse
 # from ldc.utils.logging import init_logger, close_logger
 import distributions
 
-PATH_cd = os.getcwd()
-PATH_lgs = os.path.abspath(
-    os.path.join(PATH_cd, os.pardir)
-)  # PATH to lisa_glitch_simulation directory
-PATH_lisa = os.path.abspath(os.path.join(PATH_cd, os.pardir + "/" + os.pardir))
-PATH_test = os.path.join(os.path.abspath(os.path.join(PATH_cd, os.pardir)),
-                         "testing/")
-PATH_io = os.path.join(PATH_lgs, "input_output/")
-PATH_tdi_out = os.path.join(PATH_lgs, "final_tdi_outputs")
+
+PATH_src = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+PATH_bethLISA = os.path.abspath(os.path.join(PATH_src, os.pardir))
+PATH_glitch_config = os.path.join(PATH_bethLISA, "dist/glitch_config/")
+PATH_glitch_data = os.path.join(PATH_bethLISA, "dist/glitch_data/")
+PATH_simulation_data = os.path.join(PATH_bethLISA, "dist/simulation_data/")
+PATH_tdi_data = os.path.join(PATH_bethLISA, "dist/tdi_data/")
 
 
 # TODO: Add useful help descriptions
 def init_cl():
-    """initialize command line inputs"""
+    """Initialize commandline arguments and return Namespace object with all
+    given commandline arguments.
+    """
 
     parser = argparse.ArgumentParser()
 
@@ -48,12 +48,6 @@ def init_cl():
         type=str,
         default=None,
         help="Pipeline config file",
-    )
-    parser.add_argument(
-        "-l",
-        "--log",
-        default="",
-        help="Log file"
     )
 
     # GLITCH ARGUMENTS
@@ -163,15 +157,13 @@ def init_cl():
 
 
 def cl_args_to_params(cl_args):
-    # """
-    # Parameters:
-    #   cl_args: argparser.Namespace object with all parameters given in
-    #   command line
-    # Returns:
-    #   A dictionary of all the needed parameters (and combinations of
-    #   parameters)
-    #   from cl_args
-    # """
+    """Returns a dictionary of all the needed parameters (and combinations of
+    parameters) from cl_args.
+
+    Arguments:
+    cl_args -- Namespace object with all parameters given in commandline
+    arguments
+    """
 
     params = {
         "t0": cl_args.t_min,
@@ -189,27 +181,25 @@ def cl_args_to_params(cl_args):
         "beta_type": cl_args.beta_type,
         "beta_set": [cl_args.beta_set_min, cl_args.beta_set_max],
         "beta_scale": cl_args.beta_scale,
-        "glitch_h5_output": PATH_io + cl_args.glitch_h5_output,
-        "glitch_h5_output": PATH_io + cl_args.glitch_h5_output,
+        "glitch_h5_output": PATH_glitch_data + cl_args.glitch_h5_output,
+        "glitch_txt_output": PATH_glitch_data + cl_args.glitch_txt_output,
     }
 
     return params
 
 
 def file_paths_to_params(
-    glitch_cfg_path, pipe_cfg_path, glitch_h5_output, glitch_h5_output
+    glitch_cfg_path, pipe_cfg_path, glitch_h5_output, glitch_txt_output
 ):
-    # """
-    # Parameters:
-    #   glitch_cfg_path: path to glitch_cfg file
-    #   pipe_cfg_path: path to pipe_cfg file
-    #   glitch_h5_output: path to final glitch file in as .h5
-    #   glitch_h5_output: path to final glitch file in as .txt
-    # Returns:
-    #   A dictionary of all the needed parameters (and combinations of
-    #   parameters)
-    #   from glitch_cfg and pipe_cfg
-    # """
+    """Returns a dictionary of all the needed parameters (and combinations of
+    parameters) from glitch_cfg and pipe_cfg files.
+
+    Arguments:
+      glitch_cfg_path -- path to glitch_cfg file
+      pipe_cfg_path -- path to pipe_cfg file
+      glitch_h5_output -- path to final glitch file in as .h5
+      glitch_txt_output -- path to final glitch file in as .txt
+    """
 
     glitch_cfg = ymlio.load_config(glitch_cfg_path)
     pipe_cfg = ymlio.load_config(pipe_cfg_path)
@@ -232,18 +222,19 @@ def file_paths_to_params(
         "beta_type": glitch_cfg["beta_type"],
         "beta_set": [glitch_cfg["beta_set_min"], glitch_cfg["beta_set_max"]],
         "beta_scale": glitch_cfg["beta_scale"],
-        "glitch_h5_output": PATH_io + glitch_h5_output,
-        "glitch_h5_output": PATH_io + glitch_h5_output,
+        "glitch_h5_output": PATH_glitch_data + glitch_h5_output,
+        "glitch_txt_output": PATH_glitch_data + glitch_txt_output,
     }
 
     return params
 
 
 def simulate_glitches(params):
-    """
-    Simulate glitches based off the glitch_type (the type of distribution for
-    injected timing) and the given parameters
-    params should match what"s needed for the given glitch_type
+    """Simulate glitches given dictionary of parameters and write glitches to
+    file.
+
+    Arguments:
+    params -- dictionary of parameters describing glitches to simulate
     """
 
     glitch_type = params["glitch_type"]
@@ -330,7 +321,7 @@ def simulate_glitches(params):
         + "level  "
     )
 
-    output_txt = params["glitch_h5_output"]
+    output_txt = params["glitch_txt_output"]
 
     if os.path.exists(output_txt):
         os.remove(output_txt)
@@ -359,29 +350,28 @@ def simulate_glitches(params):
 def main(inj_args, testing):
     if inj_args is not None:
         params = file_paths_to_params(
-            PATH_test + inj_args.glitch_cfg_input,
-            PATH_test + inj_args.pipe_cfg_input,
+            PATH_glitch_config + inj_args.glitch_cfg_input,
+            PATH_glitch_config + inj_args.pipe_cfg_input,
             inj_args.glitch_h5_output,
-            inj_args.glitch_h5_output,
-        )  # TODO: Update these paths
+            inj_args.glitch_txt_output,
+        )
     else:
         cl_args = init_cl()
         if cl_args.glitch_cfg_input is not None \
                 and cl_args.pipe_cfg_input is not None:
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             params = file_paths_to_params(
-                PATH_test + cl_args.glitch_cfg_input,
-                PATH_test + cl_args.pipe_cfg_input,
+                PATH_glitch_config + cl_args.glitch_cfg_input,
+                PATH_glitch_config + cl_args.pipe_cfg_input,
                 cl_args.glitch_h5_output,
-                cl_args.glitch_h5_output,
-            )  # TODO: Update these paths
+                cl_args.glitch_txt_output,
+            )
         else:
             params = cl_args_to_params(cl_args)
 
     simulate_glitches(params)
 
     return params["glitch_h5_output"],
-    params["glitch_h5_output"]
+    params["glitch_txt_output"]
 
 
 """Uncomment to run make_glitch alone"""
