@@ -27,13 +27,13 @@ def init_cl():
     parser.add_argument(
         "--glitch_h5_output",
         type=str,
-        default="glitch",
+        default="default_glitch_output.h5",
         help="Glitch output h5 file name",
     )
     parser.add_argument(
-        "--glitch_h5_output",
+        "--glitch_txt_output",
         type=str,
-        default="glitch",
+        default="default_glitch_output.txt",
         help="Glitch output txt file name",
     )
     parser.add_argument(
@@ -145,6 +145,14 @@ def init_cl():
         help=""
     )
 
+    # SEED
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed to ensure deterministic outputs"
+    )
+
     return parser.parse_args()
 
 
@@ -175,6 +183,7 @@ def cl_args_to_params(cl_args):
         "beta_scale": cl_args.beta_scale,
         "glitch_h5_output": PATH_glitch_data + cl_args.glitch_h5_output,
         "glitch_txt_output": PATH_glitch_data + cl_args.glitch_txt_output,
+        "seed": cl_args.seed,
     }
 
     return params
@@ -228,6 +237,7 @@ def simulate_glitches(params):
     Arguments:
     params -- dictionary of parameters describing glitches to simulate
     """
+    np.random.seed(params["seed"])
 
     glitch_type = params["glitch_type"]
     glitch_amp_type = params["amp_type"]
@@ -240,13 +250,14 @@ def simulate_glitches(params):
         glitch_times = distributions.glitch_times_poisson(
             glitch_rate=params["glitch_rate"],
             t0=params["t0"],
-            t_max=params["t_max"]
+            t_max=params["t_max"],
+            seed=params["seed"],
         )
     elif glitch_type.lower() == "equal spacing":
         glitch_times = distributions.glitch_times_equal_spacing(
             equal_space=params["glitch_spacing"],
             t0=params["t0"],
-            t_max=params["t_max"]
+            t_max=params["t_max"],
         )
     else:
         sys.exit(f"Not an available glitch_type {glitch_type}")
@@ -257,12 +268,13 @@ def simulate_glitches(params):
     if glitch_beta_type.lower() == "set":
         beta = distributions.betas_dist_set(
             n_samples=n_glitches,
-            beta_set=params["beta_set"]
+            beta_set=params["beta_set"],
         )
     elif glitch_beta_type.lower() == "exponential":
         beta = distributions.betas_dist_exponential(
             n_samples=n_glitches,
-            scale=params["beta_scale"]
+            scale=params["beta_scale"],
+            seed=params["seed"],
         )
     else:
         sys.exit(f"Not an available glitch_beta_type {glitch_beta_type}")
@@ -271,13 +283,15 @@ def simulate_glitches(params):
     if glitch_amp_type.lower() == "set":
         amp = distributions.amplitude_dist_set(
             n_samples=n_glitches,
-            amp_set=params["amp_set"]
+            amp_set=params["amp_set"],
+            seed=params["seed"],
         )
     elif glitch_amp_type.lower() == "gaussian":
         amp = distributions.amplitude_dist_gaussian(
             n_samples=n_glitches,
             avg_amp=params["avg_amp"],
-            std_amp=params["std_amp"]
+            std_amp=params["std_amp"],
+            seed=params["seed"],
         )
     else:
         sys.exit(f"Not an available glitch_amp_type {glitch_amp_type}")
@@ -346,6 +360,7 @@ def make_glitch(args):
             args.glitch_h5_output,
             args.glitch_txt_output,
         )
+        params["seed"] = args.seed
     else:
         cl_args = init_cl()
         if cl_args.glitch_cfg_input is not None \
@@ -356,6 +371,7 @@ def make_glitch(args):
                 cl_args.glitch_h5_output,
                 cl_args.glitch_txt_output,
             )
+            params["seed"] = cl_args.seed
         else:
             params = cl_args_to_params(cl_args)
 

@@ -56,6 +56,14 @@ def init_cl():
         help="Simulate LISA instruments without noise?"
     )
 
+    # SEED
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed to ensure deterministic outputs"
+    )
+
     return parser.parse_args()
 
 
@@ -69,7 +77,8 @@ def main():
         args.glitch_txt_output,
         args.simulation_h5_output,
         args.tdi_h5_output,
-        args.disable_noise
+        args.disable_noise,
+        args.seed,
     )
 
 

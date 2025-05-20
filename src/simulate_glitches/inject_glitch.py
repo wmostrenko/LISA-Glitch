@@ -58,6 +58,14 @@ def init_cl():
         help="Simulate LISA instruments without noise?"
     )
 
+    # SEED
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed to ensure deterministic outputs"
+    )
+
     return parser.parse_args()
 
 
@@ -85,7 +93,7 @@ def init_glitch_inputs(glitch_input_txt_path):
 
 def simulate_lisa(
     glitch_input_h5_path, simulation_output_h5_path, glitch_inputs,
-    disable_noise
+    disable_noise, seed
 ):
     """Simulate LISA and write output data to file.
 
@@ -158,7 +166,7 @@ def compute_and_save_tdi_channels(
 
 def inject_glitch(
     glitch_input_h5, glitch_input_txt, simulation_output_h5, tdi_output_h5,
-    disable_noise,
+    disable_noise=False, seed=None
 ):
     if tdi_output_h5 is None:
         cl_args = init_cl()
@@ -168,6 +176,7 @@ def inject_glitch(
         simulation_output_h5 = cl_args.simulation_output_h5
         tdi_output_h5 = cl_args.tdi_output_h5
         disable_noise = cl_args.disable_noise
+        seed = cl_args.seed
 
     glitch_inputs = init_glitch_inputs(PATH_glitch_data + glitch_input_txt)
 
@@ -176,6 +185,7 @@ def inject_glitch(
         PATH_simulation_data + simulation_output_h5,
         glitch_inputs,
         disable_noise,
+        seed,
     )
 
     compute_and_save_tdi_channels(

@@ -1,4 +1,3 @@
-seed: 1234 #not used
 t_max: 86400 s
 t_min: 0 s
 dt: 5 s

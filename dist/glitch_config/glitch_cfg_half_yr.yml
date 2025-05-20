@@ -1,5 +1,4 @@
 nsource: 36
-seed: 1234
 t_max: 15768000 s
 t_min: 0 s
 dt: 5 s
