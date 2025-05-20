@@ -28,22 +28,26 @@ def init_cl():
     parser.add_argument(
         "--glitch_input_h5",
         type=str,
-        help="Glitch input h5 file path",
+        default=None,
+        help="Glitch input h5 file path"
     )
     parser.add_argument(
         "--glitch_input_txt",
         type=str,
+        default=None,
         help="Glitch input txt file path"
     )
     parser.add_argument(
         "--simulation_output_h5",
         type=str,
-        help="Pre-TDI LISA simulation output h5 file path",
+        default=None,
+        help="Pre-TDI LISA simulation output h5 file path"
     )
     parser.add_argument(
         "--tdi_output_h5",
         type=str,
-        help="TDI channels output h5 file path",
+        default=None,
+        help="TDI channels output h5 file path"
     )
 
     # LISA INSTRUMENT ARGUMENTS
@@ -51,7 +55,7 @@ def init_cl():
         "--disable_noise",
         type=bool,
         default=False,
-        help="Simulate LISA instruments without noise?",
+        help="Simulate LISA instruments without noise?"
     )
 
     return parser.parse_args()
@@ -108,6 +112,10 @@ def simulate_lisa(
         lisa_instrument.disable_all_noises()
 
     # SIMULATE LISA AND SAVE RESULTS TO FILE
+    if os.path.exists(simulation_output_h5_path):
+        os.remove(simulation_output_h5_path)
+        print(f"The file {simulation_output_h5_path} has been deleted.")
+
     lisa_instrument.write(simulation_output_h5_path)
 
 
@@ -133,11 +141,11 @@ def compute_and_save_tdi_channels(
         channel = channels[i]
 
         # GET DATA FROM LISA INSTRUMENT
-        data = Data.from_instrument(tdi_output_h5_path)
+        data = Data.from_instrument(simulation_input_h5_path)
         data.delay_derivative = None
 
         # CALCULATE TDI CHANNEL DATA
-        tdi_calculator = channel.build(data.args)
+        tdi_calculator = channel.build(delays=data.delays, fs=data.fs)
         tdi_data = tdi_calculator(data.measurements)
 
         # WINDOW TDI CHANNEL DATA
@@ -152,9 +160,9 @@ def inject_glitch(
     glitch_input_h5, glitch_input_txt, simulation_output_h5, tdi_output_h5,
     disable_noise,
 ):
-    cl_args = init_cl()
+    if tdi_output_h5 is None:
+        cl_args = init_cl()
 
-    if cl_args.tdi_output_h5 is not None:
         glitch_input_h5 = cl_args.glitch_input_h5
         glitch_input_txt = cl_args.glitch_input_txt
         simulation_output_h5 = cl_args.simulation_output_h5
@@ -173,8 +181,8 @@ def inject_glitch(
     compute_and_save_tdi_channels(
         PATH_simulation_data + simulation_output_h5,
         PATH_tdi_data + tdi_output_h5,
-        glitch_inputs["dt"],
         glitch_inputs["t0"],
+        glitch_inputs["dt"],
     )
 
 

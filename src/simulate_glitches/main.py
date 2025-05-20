@@ -14,38 +14,46 @@ def init_cl():
     parser.add_argument(
         "--pipe_cfg_input",
         type=str,
-        default="pipeline_cfg",
+        default="",
         help="Pipeline config file name"
     )
     parser.add_argument(
-        "--glitch_config_input",
+        "--glitch_cfg_input",
         type=str,
-        default="glitch_cfg",
+        default="",
         help="Glitch config file name",
     )
     parser.add_argument(
         "--glitch_h5_output",
         type=str,
-        default="glitch_output",
+        default="default_glitch_output.h5",
         help="Glitch output .h5 file name",
     )
     parser.add_argument(
         "--glitch_txt_output",
         type=str,
-        default="glitch_output",
+        default="default_glitch_output.txt",
         help="Glitch output .txt file name",
     )
     parser.add_argument(
-        "--tdi_output",
+        "--tdi_h5_output",
         type=str,
-        default="tdi_output",
+        default="default_tdi_output.h5",
         help="TDI output .h5 file name",
     )
     parser.add_argument(
-        "--simulation_output",
+        "--simulation_h5_output",
         type=str,
-        default="simulation_output",
+        default="default_simulation_output.h5",
         help="LISA simulation output .h5 file name",
+    )
+
+    # LISA INSTRUMENT ARGUMENTS
+    parser.add_argument(
+        "--disable_noise",
+        type=bool,
+        default=False,
+        help="Simulate LISA instruments without noise?"
     )
 
     return parser.parse_args()
@@ -54,9 +62,15 @@ def init_cl():
 def main():
     args = init_cl()
 
-    glitch_h5, glitch_txt = make_glitch(args)
+    make_glitch(args)
 
-    inject_glitch(glitch_h5, glitch_txt, args.tdi_output_file)
+    inject_glitch(
+        args.glitch_h5_output,
+        args.glitch_txt_output,
+        args.simulation_h5_output,
+        args.tdi_h5_output,
+        args.disable_noise
+    )
 
 
 if __name__ == "__main__":

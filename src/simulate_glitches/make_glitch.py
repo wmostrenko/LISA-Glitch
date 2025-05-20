@@ -300,7 +300,6 @@ def simulate_glitches(params):
         print("-- Done Glitch --", i + 1, "of ", n_glitches)
 
     # FORMAT/MAKE GLITCH FILE
-    print("Making Glitch File")
     header = (
         "generator  "
         + "size  "
@@ -318,8 +317,8 @@ def simulate_glitches(params):
     if os.path.exists(output_txt):
         os.remove(output_txt)
         print(f"The file {output_txt} has been deleted.")
-    else:
-        print(f"The file {output_txt} does not exist.")
+    # else:
+    #     print(f"The file {output_txt} does not exist.")
 
     with open(f"{output_txt}", "w") as f:
         f.write(header + "\n")
@@ -361,9 +360,6 @@ def make_glitch(args):
             params = cl_args_to_params(cl_args)
 
     simulate_glitches(params)
-
-    return params["glitch_h5_output"],
-    params["glitch_txt_output"]
 
 
 """Uncomment to run make_glitch alone"""

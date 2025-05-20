@@ -1,0 +1,5 @@
+generator  size  dt  physics_upsampling  t0  t_inj  inj_point  beta  level  
+IntegratedShapeletGlitch  17280  5.0  1  0.0  20000.0  tm_32  104.71406184988521  -1.170725509094317e-07
+IntegratedShapeletGlitch  17280  5.0  1  0.0  40000.0  tm_21  128.44337386376375  -9.749789326409593e-08
+IntegratedShapeletGlitch  17280  5.0  1  0.0  60000.0  tm_31  43.5985174974106  1.1299350899333806e-07
+IntegratedShapeletGlitch  17280  5.0  1  0.0  80000.0  tm_21  7.053097054781812  -9.633679115283696e-08
