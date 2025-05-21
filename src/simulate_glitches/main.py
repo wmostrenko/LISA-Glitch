@@ -78,7 +78,6 @@ def main():
         args.simulation_h5_output,
         args.tdi_h5_output,
         args.disable_noise,
-        args.seed,
     )
 
 
